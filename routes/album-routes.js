@@ -21,7 +21,7 @@ module.exports = function(app) {
     })
 
     //GET route for all photos for one album 
-    app.get("/album/:id?", (req, res) => {
+    app.get("/album/:id", (req, res) => {
         // console.log(req.params.id)
         db.album.findOne({
             where: {
@@ -29,18 +29,20 @@ module.exports = function(app) {
             },
             include: [db.post]
         }).then(dbPhoto => {
-
-            var obj = dbPhoto
-            obj.userId = req.user.id
-            obj.userId = req.user.username
-
-            console.log(dbPhoto)
-            res.render('album', dbPhoto)
+            console.log("DB PHOTO IS ====>" + JSON.stringify(dbPhoto))
+            hbs = {
+                userId: req.user.id,
+                email: req.user.email,
+                username: req.user.username,
+                albumId: dbPhoto.id,
+                posts: dbPhoto.posts
+            }
+            res.render('album', hbs)
         })
     })
 
     //POST route to create a new album // move to auth controller for now 
-    app.post("/album/", (req, res) => {
+    app.post("/album", (req, res) => {
         db.album.create({
             title: req.body.title,
             albumImg: req.body.albumImg,
@@ -53,17 +55,14 @@ module.exports = function(app) {
             }).then(response => {
                 console.log(JSON.stringify(dbAlbum))
                 console.log("response" + JSON.stringify(response));
-
                 hbs = {
                     userId: req.user.id,
                     email: req.user.email,
                     username: req.user.username,
                     albumId: dbAlbum.id
                 }
+                res.render('album', hbs)
 
-                loadImages(hbs, res);
-
-                console.log("hbs::  " + JSON.stringify(hbs))
             })
         })
     })
@@ -77,11 +76,12 @@ module.exports = function(app) {
             },
             include: [db.post]
         }).then(dbPhoto => {
-            console.log(dbPhoto)
+            console.log("DB PHOTO IS ====>" + JSON.stringify(dbPhoto))
 
             var obj = dbPhoto
             obj.userId = hbs.userId
-
+            obj.username = hbs.username
+            obj.albumId = hbs.albumId;
 
             res.render('album', obj)
         })
